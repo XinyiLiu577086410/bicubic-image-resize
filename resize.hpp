@@ -42,9 +42,11 @@ void CalcCoeff4x4(float x, float y, float *coeff) {
 }
 
 inline
-unsigned char BGRAfterBiCubic(unsigned char* src_data, int src_rows, int src_cols, 
-                              float x_float, float y_float,
-                              int channels, int d) {
+unsigned char BGRAfterBiCubic(RGBImage src, 
+                              float          x_float,
+                              float          y_float,
+                              int            channels,
+                              int            d) {
   float coeff[16];
 
   int x0 = floor_(x_float) - 1;
@@ -55,7 +57,7 @@ unsigned char BGRAfterBiCubic(unsigned char* src_data, int src_rows, int src_col
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       sum += coeff[i * 4 + j] *
-             src_data[((x0 + i) * src_cols + y0 + j) * channels + d];
+             src.data[((x0 + i) * src.cols + y0 + j) * channels + d];
     }
   }
   return static_cast<unsigned char>(sum);
@@ -75,8 +77,8 @@ RGBImage ResizeImage(RGBImage src, float ratio) {
 
   auto res = new unsigned char[channels * resize_rows * resize_cols];
   std::fill(res, res + channels * resize_rows * resize_cols, 0);
-  auto src_data = src.data;
-  #pragma acc data copyin(src_data[:src.rows * src.cols * src.channels]) copyout(res[:resize_cols * resize_rows * channels])
+  // auto src_data = src.data;
+  #pragma acc data copyin(src) copyin(src.data[:src.rows * src.cols * src.channels]) copyout(res[:resize_cols * resize_rows * channels])
   #pragma acc parallel loop gang
   for (int i = 0; i < resize_rows; i++) {
     #pragma acc loop vector
@@ -86,7 +88,7 @@ RGBImage ResizeImage(RGBImage src, float ratio) {
       if (check_perimeter(src_x, src_y)) {
         for (int d = 0; d < channels; d++) {
           res[((i * resize_cols) + j) * channels + d] =
-              BGRAfterBiCubic(src_data, src.rows, src.cols, src_x, src_y, channels, d);
+              BGRAfterBiCubic(src, src_x, src_y, channels, d);
         }
       }
     }
