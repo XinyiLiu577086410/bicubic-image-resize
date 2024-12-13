@@ -42,7 +42,7 @@ void CalcCoeff4x4(float x, float y, float *coeff) {
 }
 
 inline
-unsigned char BGRAfterBiCubic(RGBImage src, 
+unsigned char BGRAfterBiCubic(RGBImage       src, 
                               float          x_float,
                               float          y_float,
                               int            channels,
@@ -77,8 +77,6 @@ RGBImage ResizeImage(RGBImage src, float ratio) {
 
   auto res = new unsigned char[channels * resize_rows * resize_cols];
   std::fill(res, res + channels * resize_rows * resize_cols, 0);
-  // auto src_data = src.data;
-  #pragma acc data copyin(src) copyin(src.data[:src.rows * src.cols * src.channels]) copyout(res[:resize_cols * resize_rows * channels])
   #pragma acc parallel loop gang
   for (int i = 0; i < resize_rows; i++) {
     #pragma acc loop vector
