@@ -2,6 +2,7 @@
 #define RESIZE_H_
 
 #include "utils.hpp"
+#include "omp.h"
 // #include <cmath>
 inline
 float floor_(float x) {
@@ -77,9 +78,13 @@ RGBImage ResizeImage(RGBImage src, float ratio) {
 
   auto res = new unsigned char[channels * resize_rows * resize_cols];
   std::fill(res, res + channels * resize_rows * resize_cols, 0);
+
+  std::cout << "omp_get_num_devices = " << omp_get_num_devices() << std::endl;
+
   #pragma acc parallel loop gang
+  #pragma omp target
+  #pragma omp parallel for simd collapse(2)
   for (int i = 0; i < resize_rows; i++) {
-    #pragma acc loop vector
     for (int j = 0; j < resize_cols; j++) {
       float src_x = i / ratio;
       float src_y = j / ratio;

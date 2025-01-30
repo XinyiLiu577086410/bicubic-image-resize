@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(resize)
 add_executable(resize main.cpp)
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
   target_compile_options(resize PRIVATE -O3 -acc=gpu,multicore -Minfo=acc -gpu=managed)
   find_package(OpenACC)
@@ -8,5 +9,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
     target_link_libraries(resize OpenACC::OpenACC_CXX)
     target_link_libraries(resize -gpu=managed)
   endif()
-else()
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+  target_compile_options(resize PRIVATE -O3 -fiopenmp -fopenmp-targets=spir64 -qopt-report)
+  target_link_libraries(resize -fiopenmp -fopenmp-targets=spir64)
 endif()
+
+
